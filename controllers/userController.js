@@ -55,10 +55,99 @@ const registerUser = asyncHandler(async (req, res) => {
       throw new Error(err);
     });
 });
-const loginUser = asyncHandler(async (req, res) => {});
-const logoutUser = asyncHandler(async (req, res) => {});
-const getUserProfile = asyncHandler(async (req, res) => {});
-const updateUserProfile = asyncHandler(async (req, res) => {});
+const loginUser = asyncHandler(async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email: email });
+  if (!email || !password) {
+    res.status(400);
+    throw new Error("Please fill in all fields");
+  }
+
+  if (!user) {
+    res.status(400);
+    throw new Error(
+      "User is not registered, go to register page and create an account"
+    );
+  }
+
+  const isMatch = await bcrypt.compare(password, user.password);
+
+  if (!isMatch) {
+    res.status(400);
+    throw new Error("Invalid password. Please try again");
+  }
+
+  res.status(200);
+  res.json({
+    _id: user._id,
+    userName: user.userName,
+    email: user.email,
+    caloriesGoal: user.caloriesGoal,
+    token: generateToken(user._id),
+  });
+});
+const getUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  res.status(200);
+  res.json({
+    _id: user._id,
+    userName: user.userName,
+    email: user.email,
+    caloriesGoal: user.caloriesGoal,
+  });
+});
+const updateUserProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
+  const { userName, email, caloriesGoal } = req.body;
+
+  if (!userName || !email || !caloriesGoal) {
+    res.status(400);
+    throw new Error("Not enough data");
+  }
+
+  if (caloriesGoal < 0) {
+    res.status(400);
+    throw new Error("Calories goal must be a positive number");
+  }
+
+  if (!email.includes("@")) {
+    res.status(400);
+    throw new Error("Please enter a valid email address");
+  }
+
+  user.userName != userName ? (user.userName = userName) : user.userName;
+  user.email != email ? (user.email = email) : user.email;
+  user.caloriesGoal != caloriesGoal
+    ? (user.caloriesGoal = caloriesGoal)
+    : user.caloriesGoal;
+});
+
+await User.update({ _id: req.user._id }, user)
+  .then((user) => {
+    res.status(200);
+    res.json({
+      _id: user._id,
+      userName: user.userName,
+      email: user.email,
+      caloriesGoal: user.caloriesGoal,
+    });
+  })
+  .catch((err) => {
+    res.status(400);
+    throw new Error(err);
+  });
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -69,7 +158,6 @@ const generateToken = (id) => {
 module.exports = {
   registerUser,
   loginUser,
-  logoutUser,
   getUserProfile,
   updateUserProfile,
 };
