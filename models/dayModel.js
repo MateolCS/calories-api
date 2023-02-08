@@ -6,12 +6,10 @@ const daySchema = new Schema({
     type: Date,
     required: true,
   },
-  meals: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Meal",
-    },
-  ],
+  meals: {
+    type: Array,
+    default: [],
+  },
   totalCalories: {
     type: Number,
     required: true,

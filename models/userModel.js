@@ -15,7 +15,10 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    days: [{ type: mongoose.Schema.Types.ObjectId, ref: "Day" }],
+    days: {
+      type: Array,
+      default: [],
+    },
   },
   { timestamps: true }
 );

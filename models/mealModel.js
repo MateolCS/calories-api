@@ -11,12 +11,10 @@ const mealSchema = new Schema({
     required: true,
     default: 0,
   },
-  foods: [
-    {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Food",
-    },
-  ],
+  foods: {
+    type: Array,
+    default: [],
+  },
 });
 
 const Meal = mongoose.model("Meal", mealSchema);

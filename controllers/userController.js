@@ -132,22 +132,22 @@ const updateUserProfile = asyncHandler(async (req, res) => {
   user.caloriesGoal != caloriesGoal
     ? (user.caloriesGoal = caloriesGoal)
     : user.caloriesGoal;
-});
 
-await User.update({ _id: req.user._id }, user)
-  .then((user) => {
-    res.status(200);
-    res.json({
-      _id: user._id,
-      userName: user.userName,
-      email: user.email,
-      caloriesGoal: user.caloriesGoal,
+  await User.save({ _id: req.user._id }, user)
+    .then((user) => {
+      res.status(200);
+      res.json({
+        _id: user._id,
+        userName: user.userName,
+        email: user.email,
+        caloriesGoal: user.caloriesGoal,
+      });
+    })
+    .catch((err) => {
+      res.status(400);
+      throw new Error(err);
     });
-  })
-  .catch((err) => {
-    res.status(400);
-    throw new Error(err);
-  });
+});
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
