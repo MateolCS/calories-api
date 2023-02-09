@@ -1,6 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
 const registerUser = asyncHandler(async (req, res) => {
   const { userName, email, password, passwordConfirmation } = req.body;
 
@@ -11,7 +13,7 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new Error("User already exists");
   }
 
-  if (!userName || !email || !password) {
+  if (!userName || !email || !password || !passwordConfirmation) {
     res.status(400);
     throw new Error("Please fill in all fields");
   }
@@ -38,22 +40,18 @@ const registerUser = asyncHandler(async (req, res) => {
     userName,
     email,
     password: hashedPassword,
-    caloriesGoal: 0,
-  })
-    .then(() => {
-      res.status(201);
-      res.json({
-        _id: user._id,
-        userName: user.userName,
-        email: user.email,
-        caloriesGoal: user.caloriesGoal,
-        token: generateToken(user._id),
-      });
-    })
-    .catch((err) => {
-      res.status(400);
-      throw new Error(err);
+  });
+
+  if (user) {
+    res.status(201);
+    res.json({
+      _id: user._id,
+      userName: user.userName,
+      email: user.email,
+      caloriesGoal: user.caloriesGoal,
+      token: generateToken(user._id),
     });
+  }
 });
 const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
@@ -87,20 +85,8 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 });
 const getUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
-
-  if (!user) {
-    res.status(404);
-    throw new Error("User not found");
-  }
-
   res.status(200);
-  res.json({
-    _id: user._id,
-    userName: user.userName,
-    email: user.email,
-    caloriesGoal: user.caloriesGoal,
-  });
+  res.json(req.user);
 });
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -133,20 +119,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     ? (user.caloriesGoal = caloriesGoal)
     : user.caloriesGoal;
 
-  await User.save({ _id: req.user._id }, user)
-    .then((user) => {
-      res.status(200);
-      res.json({
-        _id: user._id,
-        userName: user.userName,
-        email: user.email,
-        caloriesGoal: user.caloriesGoal,
-      });
-    })
-    .catch((err) => {
-      res.status(400);
-      throw new Error(err);
-    });
+  const updatedUser = await user.save();
+
+  res.status(200);
+  res.json(updatedUser);
 });
 
 const generateToken = (id) => {

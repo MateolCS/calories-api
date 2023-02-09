@@ -7,9 +7,11 @@ const {
   updateDay,
   deleteDay,
 } = require("../controllers/dayController");
+const { protectRoute } = require("../middleware/authMiddleware");
 
-router.get("/", getDays);
-router.get("/:id", getDay);
-router.post("/", createDay);
-router.put("/:id", updateDay);
-router.delete("/:id", deleteDay);
+router.get("/", protectRoute, getDays);
+router.get("/:id", protectRoute, getDay);
+router.post("/", protectRoute, createDay);
+router.patch("/:id", protectRoute, updateDay);
+router.delete("/:id", protectRoute, deleteDay);
+module.exports = router;

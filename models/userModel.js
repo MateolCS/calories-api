@@ -19,6 +19,10 @@ const userSchema = new Schema(
       type: Array,
       default: [],
     },
+    caloriesGoal: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

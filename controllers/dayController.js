@@ -1,7 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const Day = require("../models/dayModel");
+const User = require("../models/userModel");
 
-const addDay = asyncHandler(async (req, res) => {
+const createDay = asyncHandler(async (req, res) => {
   const { day } = req.body;
 
   if (!day) {
@@ -20,19 +21,29 @@ const addDay = asyncHandler(async (req, res) => {
       throw new Error(err);
     });
 });
+
 const getDays = asyncHandler(async (req, res) => {
   const userId = req.user._id;
-  const days = await Day.find({ user: userId });
+  const user = User.findById(userId);
 
-  if (!days) {
+  if (!user) {
     res.status(404);
-    throw new Error("No days found");
+    throw new Error("No user found");
   }
 
+  const days = await Promise.all(user.days.map((id) => Day.findById(id)));
+  const formattedDays = days.map(({ date, caloriesCount }) => {
+    return {
+      date,
+      caloriesCount,
+    };
+  });
+
   res.status(200);
-  res.json(days);
+  res.json(formattedDays);
 });
-const getDayById = asyncHandler(async (req, res) => {
+
+const getDay = asyncHandler(async (req, res) => {
   const dayId = req.params.id;
   const day = await Day.findById(dayId);
 
@@ -40,7 +51,11 @@ const getDayById = asyncHandler(async (req, res) => {
     res.status(404);
     throw new Error("No day found");
   }
+
+  res.status(200);
+  res.json(day);
 });
+
 const updateDay = asyncHandler(async (req, res) => {
   const dayId = req.params.id;
   const { day } = req.body;
@@ -56,17 +71,16 @@ const updateDay = asyncHandler(async (req, res) => {
     throw new Error("No day provided");
   }
 
-  await Day.update({ _id: dayId }, day)
+  await Day.save({ _id: dayId }, day)
     .then((day) => {
-      res.status(200).json({
-        day,
-      });
+      res.status(200).json(day);
     })
     .catch((err) => {
       res.status(400);
       throw new Error(err);
     });
 });
+
 const deleteDay = asyncHandler(async (req, res) => {
   const dayId = req.params.id;
 
@@ -84,9 +98,9 @@ const deleteDay = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
-  addDay,
+  createDay,
   getDays,
-  getDayById,
+  getDay,
   updateDay,
   deleteDay,
 };

@@ -9,7 +9,6 @@ const mealSchema = new Schema({
   calories: {
     type: Number,
     required: true,
-    default: 0,
   },
   foods: {
     type: Array,
