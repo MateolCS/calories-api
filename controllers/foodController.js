@@ -2,51 +2,65 @@ const asyncHandler = require("express-async-handler");
 const Food = require("../models/foodModel");
 
 const createFood = asyncHandler(async (req, res) => {
+  const { name, calories } = req.body;
 
-    const { name, calories } = req.body;
-    const food = new Food({
-        name,
-        calories,
-    });
+  const alreadyCreated = await Food.findOne({ name });
 
-    const createdFood = await food.save();
+  if (alreadyCreated) {
+    res.status(400);
+    throw new Error("Food already created");
+  }
 
-    if(!createdFood){
-        res.status(400);
-        throw new Error("Food not created");
-    }
+  const food = new Food({
+    name,
+    calories,
+  });
 
-    res.status(201);
-    res.json(createdFood);
+  const createdFood = await food.save();
+
+  if (!createdFood) {
+    res.status(400);
+    throw new Error("Food not created");
+  }
+
+  res.status(201);
+  res.json(createdFood);
 });
 
 const getFoods = asyncHandler(async (req, res) => {
-    const foods = await Food.find({});
-    res.json(foods);
+  const foods = await Food.find({});
+  res.json(foods);
 });
 
+//work on sending data only with one of fields
+
 const updateFood = asyncHandler(async (req, res) => {
-    const foodId = req.params.id;
-    const { name, calories } = req.body;
+  const foodId = req.params.id;
+  const { name, calories } = req.body;
 
-    const food = Food.findById(foodId);
+  const food = await Food.findById(foodId);
 
-    name !== null ? food.name = name : food.name;
-    calories !== null ? food.calories = calories : food.calories;
+  if (!food) {
+    res.status(404);
+    throw new Error("Food not found");
+  }
 
-    const updatedFood = await food.save();
+  food.name = name;
+  food.calories = calories;
 
-    if(!updatedFood){
-        res.status(400);
-        throw new Error("Food not updated");
-    }
+  const updatedFood = await food.save();
 
-    res.status(200);
-    res.json(updatedFood);
+  if (!updatedFood) {
+    res.status(400);
+    throw new Error("Food not updated");
+  }
+
+  res.status(200);
+  res.json(updatedFood);
 });
 
 module.exports = {
-    createFood,
-    getFoods,
-    updateFood,
+  createFood,
+  getFoods,
+  updateFood,
 };
