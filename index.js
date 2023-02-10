@@ -15,6 +15,7 @@ app.use(ErrorHandler);
 
 app.use("/api/users", require("./routes/userRouter"));
 app.use("/api/days", require("./routes/dayRouter"));
+app.use("/api/meals", require("./routes/mealRouter"));
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
