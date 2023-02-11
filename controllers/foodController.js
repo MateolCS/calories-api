@@ -59,17 +59,8 @@ const updateFood = asyncHandler(async (req, res) => {
   res.json(updatedFood);
 });
 
-const getMealFoods = async (foodIds) => {
-  const foods = await Promise.all(
-    foodIds.map((foodId) => Food.findById(foodId))
-  );
-
-  return foods;
-};
-
 module.exports = {
   createFood,
   getFoods,
   updateFood,
-  getMealFoods,
 };

@@ -10,10 +10,13 @@ const mealSchema = new Schema({
     type: Number,
     required: true,
   },
-  foods: {
-    type: Array,
-    default: [],
-  },
+  foods: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Food",
+      default: [],
+    },
+  ],
 });
 
 const Meal = mongoose.model("Meal", mealSchema);

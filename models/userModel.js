@@ -15,10 +15,13 @@ const userSchema = new Schema(
       type: String,
       required: true,
     },
-    days: {
-      type: Array,
-      default: [],
-    },
+    days: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Day",
+        default: [],
+      },
+    ],
     caloriesGoal: {
       type: Number,
       default: 0,

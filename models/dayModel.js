@@ -6,10 +6,13 @@ const daySchema = new Schema({
     type: Date,
     required: true,
   },
-  meals: {
-    type: Array,
-    default: [],
-  },
+  meals: [
+    {
+      type: Schema.Types.ObjectId,
+      ref: "Meal",
+      default: [],
+    },
+  ],
   totalCalories: {
     type: Number,
     required: true,

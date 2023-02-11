@@ -1,7 +1,5 @@
 const asyncHandler = require("express-async-handler");
 const Meal = require("../models/mealModel");
-const Food = require("../models/foodModel");
-const { getMealFoods } = require("../controllers/foodController");
 
 const createMeal = asyncHandler(async (req, res) => {
   const { name, calories, foods } = req.body;
@@ -20,32 +18,6 @@ const createMeal = asyncHandler(async (req, res) => {
 
   res.status(201);
   res.json(createdMeal);
-});
-
-const getMeals = asyncHandler(async (req, res) => {
-  const mealsId = req.body.mealsId;
-
-  const meals = await Promise.all(
-    mealsId.map((mealId) => Meal.findById(mealId))
-  );
-
-  const mealsWithFoods = await Promise.all(
-    meals.map((meal) => {
-      return getMealFoods(meal.foods);
-    })
-  );
-
-  const correctMeals = meals.map((meal, index) => {
-    return {
-      _id: meal._id,
-      name: meal.name,
-      calories: meal.calories,
-      foods: mealsWithFoods[index],
-    };
-  });
-
-  res.status(200);
-  res.json(correctMeals);
 });
 
 // test later but most likely doesnt work
@@ -98,9 +70,23 @@ const deleteMeal = asyncHandler(async (req, res) => {
   res.json({ message: "Meal deleted" });
 });
 
+const getMeal = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const meal = await Meal.findById(id).populate("foods");
+
+  if (!meal) {
+    res.status(404);
+    throw new Error("No meal found");
+  }
+
+  res.status(200);
+  res.json(meal);
+});
+
 module.exports = {
   createMeal,
-  getMeals,
   updateMeal,
   deleteMeal,
+  getMeal,
 };

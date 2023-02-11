@@ -84,12 +84,25 @@ const loginUser = asyncHandler(async (req, res) => {
     token: generateToken(user._id),
   });
 });
+
 const getUserProfile = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const user = await User.findById(id).select("-password");
+
+  if (!user) {
+    res.status(404);
+    throw new Error("User not found");
+  }
+
   res.status(200);
-  res.json(req.user);
+  res.json(user);
 });
+
 const updateUserProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user._id);
+  const { id } = req.params;
+
+  const user = await User.findById(id);
 
   if (!user) {
     res.status(404);
@@ -121,8 +134,10 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 
   const updatedUser = await user.save();
 
+  const forwardUser = await User.findById(id).select("-password");
+
   res.status(200);
-  res.json(updatedUser);
+  res.json(forwardUser);
 });
 
 const generateToken = (id) => {

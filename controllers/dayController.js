@@ -1,8 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const Day = require("../models/dayModel");
-const Meal = require("../models/mealModel");
 const User = require("../models/userModel");
-const { getMealFoods } = require("./foodController");
+const mongoose = require("mongoose");
 
 const createDay = asyncHandler(async (req, res) => {
   const { date, meals, totalCalories } = req.body;
@@ -23,6 +22,11 @@ const createDay = asyncHandler(async (req, res) => {
 
   const userId = req.user._id;
   const user = await User.findById(userId);
+
+  if (!user) {
+    res.status(404);
+    throw new Error("Incorrect user");
+  }
 
   user.days.push(createdDay._id);
   const savedDay = await user.save();
@@ -45,35 +49,31 @@ const getDays = asyncHandler(async (req, res) => {
     throw new Error("No user found");
   }
 
-  const days = await Promise.all(user.days.map((id) => Day.findById(id)));
-  const formattedDays = days.map(({ date, totalCalories }) => {
-    return {
-      date,
-      totalCalories,
-    };
-  });
+  const days = await Promise.all(
+    user.days.map((id) =>
+      Day.findById(id).populate({ path: "meals", populate: { path: "foods" } })
+    )
+  );
 
   res.status(200);
-  res.json(formattedDays);
+  res.json(days);
 });
 
 const getDay = asyncHandler(async (req, res) => {
   const dayId = req.params.id;
-  const day = await Day.findById(dayId);
+
+  const day = await Day.findById(dayId).populate({
+    path: "meals",
+    populate: { path: "foods" },
+  });
 
   if (!day) {
     res.status(404);
     throw new Error("No day found");
   }
 
-  const dayMeals = await Promise.all(
-    day.meals.map((meal) => Meal.findById(meal))
-  );
-
-  const dayWithMeals = day.meals.map((meal, index) => {});
-
   res.status(200);
-  res.json(dayWithMeals);
+  res.json(day);
 });
 
 const updateDay = asyncHandler(async (req, res) => {
@@ -103,18 +103,36 @@ const updateDay = asyncHandler(async (req, res) => {
 
 const deleteDay = asyncHandler(async (req, res) => {
   const dayId = req.params.id;
+  const user = await User.findById(req.user._id);
+  const dayMongoId = mongoose.Types.ObjectId(dayId);
+  console.log(dayMongoId);
 
-  await Day.deleteOne({ _id: dayId })
-    .then(() => {
-      res.status(200);
-      res.json({
-        message: "Day deleted successfully",
-      });
-    })
-    .catch((err) => {
-      res.status(400);
-      throw new Error(err);
-    });
+  const day = await Day.findById(dayId);
+
+  if (!day) {
+    res.status(404);
+    throw new Error("No day found");
+  }
+
+  const deletedDay = await day.remove();
+
+  if (!deletedDay) {
+    res.status(400);
+    throw new Error("Day not deleted");
+  }
+
+  user.days = user.days.filter((id) => !id.equals(dayMongoId));
+  console.log(user.days);
+
+  const savedUser = await user.save();
+
+  if (!savedUser) {
+    res.status(400);
+    throw new Error("User not saved");
+  }
+
+  res.status(200);
+  res.json({ message: "Day deleted" });
 });
 
 module.exports = {
